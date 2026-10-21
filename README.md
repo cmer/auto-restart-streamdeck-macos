@@ -19,7 +19,7 @@ It's more common when the deck sits behind a USB hub or dock, where it can take 
 A launch agent watches `~/Library/Logs/ElgatoStreamDeck/StreamDeck.log`. When `Read FW version: FAILED` appears, it waits 5 seconds and restarts the app in the background.
 
 - It only acts on that failure. On a normal wake it does nothing.
-- It restarts at most once every 2 minutes, so a deck that keeps failing can't put the app in a restart loop.
+- A restarted app can hit the same failure, so it retries. It stops after 3 restarts in 10 minutes, so a deck that keeps failing can't put the app in a restart loop.
 - It stops the app by its exact process name and PID, with a 10 second grace period before forcing it.
 
 ## Install
@@ -52,5 +52,6 @@ Environment variables, mostly for testing:
 | --- | --- | --- |
 | `STREAMDECK_LOG` | `~/Library/Logs/ElgatoStreamDeck/StreamDeck.log` | Log file to watch |
 | `SETTLE_SECONDS` | `5` | Wait between the failure and the restart |
-| `COOLDOWN_SECONDS` | `120` | Minimum time between restarts |
+| `MAX_RESTARTS` | `3` | Restarts allowed per window |
+| `WINDOW_SECONDS` | `600` | Length of that window |
 | `DRY_RUN` | `0` | `1` logs the restart instead of doing it |

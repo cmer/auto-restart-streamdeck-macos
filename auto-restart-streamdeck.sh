@@ -18,8 +18,10 @@ PROCESS_NAME="Stream Deck"
 PATTERN="Read FW version: FAILED"
 # Gives the deck time to finish powering up before the app looks at it again.
 SETTLE_SECONDS="${SETTLE_SECONDS:-5}"
-# A deck that fails every time would otherwise restart the app in a loop.
-COOLDOWN_SECONDS="${COOLDOWN_SECONDS:-120}"
+# A restart can hit the same failure, so a few retries are allowed. A deck that fails
+# every time would otherwise restart the app in a loop, so the retries are capped.
+MAX_RESTARTS="${MAX_RESTARTS:-3}"
+WINDOW_SECONDS="${WINDOW_SECONDS:-600}"
 DRY_RUN="${DRY_RUN:-0}"
 
 log() {
@@ -54,7 +56,7 @@ restart_app() {
 }
 
 watch_log() {
-	local last_restart=0 now
+	local window_start=0 restarts=0 now
 	log "watching $LOG_FILE"
 
 	# -F follows the file across the app's log rotation; -n 0 skips old failures.
@@ -65,14 +67,18 @@ watch_log() {
 		esac
 
 		now=$(date +%s)
-		if [ $((now - last_restart)) -lt "$COOLDOWN_SECONDS" ]; then
-			log "device failed again within ${COOLDOWN_SECONDS}s of a restart, leaving it alone"
+		if [ $((now - window_start)) -ge "$WINDOW_SECONDS" ]; then
+			window_start=$now
+			restarts=0
+		fi
+		if [ "$restarts" -ge "$MAX_RESTARTS" ]; then
+			log "device failed again after $restarts restarts in ${WINDOW_SECONDS}s, leaving it alone"
 			continue
 		fi
+		restarts=$((restarts + 1))
 
-		log "Stream Deck app dropped the device, restarting in ${SETTLE_SECONDS}s"
+		log "Stream Deck app dropped the device, restarting in ${SETTLE_SECONDS}s (attempt $restarts of $MAX_RESTARTS)"
 		sleep "$SETTLE_SECONDS"
-		last_restart=$(date +%s)
 		restart_app
 	done
 }
