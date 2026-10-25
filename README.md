@@ -25,8 +25,10 @@ A launch agent watches `~/Library/Logs/ElgatoStreamDeck/StreamDeck.log`. When `R
 ## Install
 
 ```sh
-./install.sh
+curl -fsSL https://raw.githubusercontent.com/cmer/auto-restart-streamdeck-macos/main/install.sh | bash
 ```
+
+Or from a clone, run `./install.sh`.
 
 The script is copied to `~/Library/Application Support/auto-restart-streamdeck/`, and a launch agent is added at `~/Library/LaunchAgents/com.cmer.auto-restart-streamdeck.plist`. It starts at login and launchd restarts it if it exits.
 
@@ -41,8 +43,10 @@ Activity is logged to `~/Library/Logs/auto-restart-streamdeck.log`.
 ## Uninstall
 
 ```sh
-./uninstall.sh
+curl -fsSL https://raw.githubusercontent.com/cmer/auto-restart-streamdeck-macos/main/uninstall.sh | bash
 ```
+
+Or from a clone, run `./uninstall.sh`.
 
 ## Settings
 

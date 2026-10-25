@@ -3,7 +3,7 @@
 set -euo pipefail
 
 LABEL="com.cmer.auto-restart-streamdeck"
-SOURCE_DIR=$(cd "$(dirname "$0")" && pwd)
+REPO_URL="https://raw.githubusercontent.com/cmer/auto-restart-streamdeck-macos/main"
 # Copied out of the repo so moving or deleting the clone does not break the agent.
 INSTALL_DIR="$HOME/Library/Application Support/auto-restart-streamdeck"
 SCRIPT="$INSTALL_DIR/auto-restart-streamdeck.sh"
@@ -12,7 +12,17 @@ LOG="$HOME/Library/Logs/auto-restart-streamdeck.log"
 DOMAIN="gui/$(id -u)"
 
 mkdir -p "$INSTALL_DIR" "$HOME/Library/LaunchAgents" "$HOME/Library/Logs"
-install -m 755 "$SOURCE_DIR/auto-restart-streamdeck.sh" "$SCRIPT"
+
+# Piped from curl there is no clone to copy from, so the watcher is downloaded instead.
+SOURCE="${BASH_SOURCE[0]:-}"
+if [ -n "$SOURCE" ] && [ -f "$(dirname "$SOURCE")/auto-restart-streamdeck.sh" ]; then
+	install -m 755 "$(dirname "$SOURCE")/auto-restart-streamdeck.sh" "$SCRIPT"
+else
+	TMP=$(mktemp)
+	trap 'rm -f "$TMP"' EXIT
+	curl -fsSL "$REPO_URL/auto-restart-streamdeck.sh" -o "$TMP"
+	install -m 755 "$TMP" "$SCRIPT"
+fi
 
 # printf rather than a heredoc: Homebrew's bash 5.3 hangs on heredocs over 512 bytes,
 # and curl | bash runs whichever bash is first on PATH.
