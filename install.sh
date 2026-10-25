@@ -14,17 +14,18 @@ DOMAIN="gui/$(id -u)"
 mkdir -p "$INSTALL_DIR" "$HOME/Library/LaunchAgents" "$HOME/Library/Logs"
 install -m 755 "$SOURCE_DIR/auto-restart-streamdeck.sh" "$SCRIPT"
 
-cat > "$PLIST" <<EOF
-<?xml version="1.0" encoding="UTF-8"?>
+# printf rather than a heredoc: Homebrew's bash 5.3 hangs on heredocs over 512 bytes,
+# and curl | bash runs whichever bash is first on PATH.
+printf '<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
 	<key>Label</key>
-	<string>$LABEL</string>
+	<string>%s</string>
 	<key>ProgramArguments</key>
 	<array>
 		<string>/bin/bash</string>
-		<string>$SCRIPT</string>
+		<string>%s</string>
 	</array>
 	<key>RunAtLoad</key>
 	<true/>
@@ -35,12 +36,12 @@ cat > "$PLIST" <<EOF
 	<key>ProcessType</key>
 	<string>Background</string>
 	<key>StandardOutPath</key>
-	<string>$LOG</string>
+	<string>%s</string>
 	<key>StandardErrorPath</key>
-	<string>$LOG</string>
+	<string>%s</string>
 </dict>
-</plist>
-EOF
+</plist>\n' \
+	"$LABEL" "$SCRIPT" "$LOG" "$LOG" > "$PLIST"
 
 # Reinstalling replaces a running copy instead of failing on it.
 launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null || true
